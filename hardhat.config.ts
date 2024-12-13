@@ -4,11 +4,13 @@ import "@nomicfoundation/hardhat-ethers";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-deploy";
 
+import "./tasks/example";
+
 if (typeof process.env.PRIVATE_KEY === "undefined") {
     throw new Error("PRIVATE KEY REQUIRED");
 }
 
-if (typeof process.env.ARB_RPC_URL === "undefined") {
+if (typeof process.env.ARBSEP_RPC_URL === "undefined") {
     throw new Error("RPC URL required");
 }
 
@@ -16,7 +18,8 @@ const config: HardhatUserConfig = {
     namedAccounts: {
         deployer: {
             default: 0,
-            42161: 0, // arbitrum
+            421614: 0,
+            11155111: 0,
         },
     },
     solidity: {
@@ -29,10 +32,15 @@ const config: HardhatUserConfig = {
         },
     },
     networks: {
-        arbitrum: {
-            url: process.env.ARB_RPC_URL,
+        arbsepolia: {
+            url: process.env.ARBSEP_RPC_URL,
             accounts: [process.env.PRIVATE_KEY],
-            chainId: 42161,
+            chainId: 421614,
+        },
+        sepolia: {
+            url: process.env.SEP_RPC_URL,
+            accounts: [process.env.PRIVATE_KEY],
+            chainId: 11155111,
         },
     },
 };

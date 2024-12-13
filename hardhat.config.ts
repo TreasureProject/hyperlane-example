@@ -2,6 +2,7 @@ import "dotenv/config";
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-ethers";
 import "@nomicfoundation/hardhat-toolbox";
+import "hardhat-deploy";
 
 if (typeof process.env.PRIVATE_KEY === "undefined") {
     throw new Error("PRIVATE KEY REQUIRED");
@@ -12,6 +13,12 @@ if (typeof process.env.ARB_RPC_URL === "undefined") {
 }
 
 const config: HardhatUserConfig = {
+    namedAccounts: {
+        deployer: {
+            default: 0,
+            42161: 0, // arbitrum
+        },
+    },
     solidity: {
         version: "0.8.28",
         settings: {

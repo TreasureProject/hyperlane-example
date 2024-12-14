@@ -16,12 +16,12 @@ const TOKEN_ROUTER_ABI = [
 
 async function setupChainPairing() {
     // Get deployed token addresses from deployments
-    const originDeployment = await deployments.get("YourTokenContract"); // Replace with your token contract name
+    const originDeployment = await deployments.get("MyCustomHypERC20Collateral");
     const originRouter = originDeployment.address;
 
     // For destination chain deployment, you'll need to read from the deployments directory
     const fs = require("fs");
-    const destDeploymentPath = `deployments/destination/${process.env.DEST_CHAIN_NAME}/YourTokenContract.json`;
+    const destDeploymentPath = `deployments/sepolia/MyCustomHypERC20Collateral.json`;
     const destDeployment = JSON.parse(fs.readFileSync(destDeploymentPath, "utf8"));
     const destRouter = destDeployment.address;
 

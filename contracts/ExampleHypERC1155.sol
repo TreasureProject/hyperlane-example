@@ -30,7 +30,7 @@ contract HypERC1155 is ERC1155SupplyUpgradeable, TokenRouter {
 
     function supportsInterface(
         bytes4 interfaceId
-    ) public view override(ERC1155Upgradeable) returns (bool) {
+    ) public view virtual override(ERC1155Upgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 

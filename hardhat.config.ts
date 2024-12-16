@@ -4,7 +4,10 @@ import "@nomicfoundation/hardhat-ethers";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-deploy";
 
-import "./tasks/example";
+import "./tasks/mintErc20";
+import "./tasks/transfer";
+import "./tasks/enrollRouter";
+import "./tasks/log";
 
 if (typeof process.env.PRIVATE_KEY === "undefined") {
     throw new Error("PRIVATE KEY REQUIRED");

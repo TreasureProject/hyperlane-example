@@ -254,10 +254,10 @@
       "content": "// SPDX-License-Identifier: Apache-2.0\npragma solidity >=0.8.0;\n\nimport { HypERC20Collateral } from \"@hyperlane-xyz/core/contracts/token/HypERC20Collateral.sol\";\n\ncontract MyCustomHypERC20Collateral is HypERC20Collateral {\n    constructor(address erc20, address _mailbox) HypERC20Collateral(erc20, _mailbox) {}\n}\n"
     },
     "contracts/MyCustomHypERC721.sol": {
-      "content": "// SPDX-License-Identifier: Apache-2.0\npragma solidity >=0.8.0;\n\nimport { HypERC721 } from \"@hyperlane-xyz/core/contracts/token/HypERC721.sol\";\n\ncontract MyCustomHypERC20 is HypERC721 {\n    constructor(uint8 _decimals, address _mailbox) HypERC721(_mailbox) {}\n\n    function mint(address to, uint256 amount) external {\n        _mint(to, amount);\n    }\n}\n"
+      "content": "// SPDX-License-Identifier: Apache-2.0\npragma solidity >=0.8.0;\n\nimport { HypERC721 } from \"@hyperlane-xyz/core/contracts/token/HypERC721.sol\";\n\ncontract MyCustomHypERC721 is HypERC721 {\n    constructor(uint8 _decimals, address _mailbox) HypERC721(_mailbox) {}\n\n    function mint(address to, uint256 amount) external {\n        _mint(to, amount);\n    }\n}\n"
     },
     "contracts/MyCustomHypERC721Collateral.sol": {
-      "content": "// SPDX-License-Identifier: Apache-2.0\npragma solidity >=0.8.0;\n\nimport { HypERC721Collateral } from \"@hyperlane-xyz/core/contracts/token/HypERC721Collateral.sol\";\n\ncontract MyCustomHypERC20 is HypERC721Collateral {\n    constructor(address erc721, address _mailbox) HypERC721Collateral(erc721, _mailbox) {}\n}\n"
+      "content": "// SPDX-License-Identifier: Apache-2.0\npragma solidity >=0.8.0;\n\nimport { HypERC721Collateral } from \"@hyperlane-xyz/core/contracts/token/HypERC721Collateral.sol\";\n\ncontract MyCustomHypERC721 is HypERC721Collateral {\n    constructor(address erc721, address _mailbox) HypERC721Collateral(erc721, _mailbox) {}\n}\n"
     }
   },
   "settings": {

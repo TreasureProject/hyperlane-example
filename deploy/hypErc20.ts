@@ -1,31 +1,49 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { NETWORK_CONFIG, TOKEN_CONFIG } from "../config";
+import { TOKEN_MAPPING } from "../config";
+
+const TOKEN_CONFIG = {
+    name: "MyCustomHypERC20",
+    symbol: "GLT",
+    decimals: 18,
+    totalSupply: "1000000000000000000000000", // 1 million
+} as const;
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts, network } = hre;
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    const networkConfig = NETWORK_CONFIG.find((n) => n.name === network.name);
+    const networkConfig = TOKEN_MAPPING.find((n) => n.srcChain === network.name);
     if (!networkConfig) {
         throw new Error(`No config found for ${network.name}`);
     }
 
-    const mailbox = await hre.ethers.getContractAt("IMailbox", networkConfig.mailbox);
-    const ism = networkConfig.customIsm || (await mailbox.defaultIsm());
-    const igp = networkConfig.customIgp || (await mailbox.defaultHook());
+    console.log(networkConfig);
 
-    const result = await deploy("HypERC20", {
+    if (!network.config.lzMailbox) {
+        throw new Error("lzMailbox must be defined for the network");
+    }
+
+    const mailbox = await hre.ethers.getContractAt("IMailbox", network.config.lzMailbox);
+    console.log("got mailbox");
+    const ism = networkConfig.customIsm || (await mailbox.defaultIsm());
+    console.log("got ism");
+
+    const igp = networkConfig.customIgp || (await mailbox.defaultHook());
+    console.log("got igp");
+
+    const result = await deploy(TOKEN_CONFIG.name, {
         from: deployer,
-        args: [TOKEN_CONFIG.decimals, networkConfig.mailbox],
+        args: [TOKEN_CONFIG.decimals, network.config.lzMailbox],
         log: true,
         waitConfirmations: 2,
     });
 
-    const token = await hre.ethers.getContractAt("HypERC20", result.address);
+    const token = await hre.ethers.getContractAt(TOKEN_CONFIG.name, result.address);
 
     if (result.newlyDeployed) {
+        console.log("new deploy, init token");
         await token.initialize(
             TOKEN_CONFIG.totalSupply,
             TOKEN_CONFIG.name,
@@ -35,22 +53,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             deployer,
         );
 
+        console.log("setting gas configs");
+
         const gasConfigs = Object.entries(networkConfig.gasConfig.destinationGas).map(
             ([domain, gas]) => ({
                 domain: parseInt(domain),
                 gas,
             }),
         );
+
+        //@ts-expect-error package types defective
         await token.setDestinationGas(gasConfigs);
 
-        console.log(
-            "Save result:",
-            await deployments.save(`${TOKEN_CONFIG.name}-hlinfo`, {
-                abi: result.abi,
-                address: result.address,
-                peers: networkConfig.peers,
-            }),
-        );
+        console.log("destination gas set");
     }
 };
 

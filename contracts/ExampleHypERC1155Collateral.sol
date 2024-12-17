@@ -5,6 +5,12 @@ import { TokenRouter } from "@hyperlane-xyz/core/contracts/token/libs/TokenRoute
 import { TokenRouter } from "@hyperlane-xyz/core/contracts/token/libs/TokenRouter.sol";
 import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import { ERC1155Holder } from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import { IERC1155MetadataURI } from "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
+
+interface IERC1155WithMetadata {
+    function name() external view returns (string memory);
+    function symbol() external view returns (string memory);
+}
 
 /**
  * @title Unofficial and UNAUDITED Hyperlane ERC1155 Token Collateral
@@ -16,27 +22,18 @@ import { ERC1155Holder } from "@openzeppelin/contracts/token/ERC1155/utils/ERC11
  */
 
 contract HypERC1155Collateral is TokenRouter, ERC1155Holder {
-    IERC1155 public immutable wrappedToken;
-
-    string private _name;
-    string private _symbol;
-
-    error InsufficientBalance(address from, uint256 tokenId, uint256 amount);
+    IERC1155MetadataURI public immutable wrappedToken;
 
     constructor(address erc1155, address _mailbox) TokenRouter(_mailbox) {
-        wrappedToken = IERC1155(erc1155);
+        wrappedToken = IERC1155MetadataURI(erc1155);
     }
 
     function initialize(
-        string memory tokenName,
-        string memory tokenSymbol,
         address _hook,
         address _interchainSecurityModule,
         address _owner
     ) public virtual initializer {
         _MailboxClient_initialize(_hook, _interchainSecurityModule, _owner);
-        _name = tokenName;
-        _symbol = tokenSymbol;
     }
 
     function transferRemote(
@@ -51,10 +48,6 @@ contract HypERC1155Collateral is TokenRouter, ERC1155Holder {
 
     function _transferFromSender(uint256 packed) internal virtual override returns (bytes memory) {
         (uint256 tokenId, uint256 amount) = _unpackValues(packed);
-
-        if (wrappedToken.balanceOf(msg.sender, tokenId) < amount) {
-            revert InsufficientBalance(msg.sender, tokenId, amount);
-        }
 
         wrappedToken.safeTransferFrom(msg.sender, address(this), tokenId, amount, "");
         return ""; // No additional metadata needed
@@ -81,13 +74,12 @@ contract HypERC1155Collateral is TokenRouter, ERC1155Holder {
     }
 
     function name() public view returns (string memory) {
-        return _name;
+        return IERC1155WithMetadata(address(wrappedToken)).name();
     }
 
     function symbol() public view returns (string memory) {
-        return _symbol;
+        return IERC1155WithMetadata(address(wrappedToken)).symbol();
     }
-
     function uri(uint256 id) public view returns (string memory) {
         return wrappedToken.uri(id);
     }
@@ -98,5 +90,9 @@ contract HypERC1155Collateral is TokenRouter, ERC1155Holder {
 
     function balanceOf(address) public pure override(TokenRouter) returns (uint256) {
         revert("Use balanceOf(address,uint256)");
+    }
+
+    function balanceOf(address account, uint256 id) public view returns (uint256) {
+        return wrappedToken.balanceOf(account, id);
     }
 }

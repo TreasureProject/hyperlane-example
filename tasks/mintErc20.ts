@@ -5,9 +5,9 @@ task("mint", "Mints tokens to a specified address")
     .addParam("amount", "Amount of tokens to mint, in wei")
     .setAction(async (taskArgs, hre) => {
         // Get the contract factory using ethers.js v6
-        const deployment = await hre.deployments.get("MyERC20");
+        const deployment = await hre.deployments.get("MyCustomHypERC20");
         // Use getContractAt to connect to an existing contract
-        const myERC20 = await hre.ethers.getContractAt("MyERC20", deployment.address); // Replace with your deployed contract's address
+        const myERC20 = await hre.ethers.getContractAt("MyCustomHypERC20", deployment.address); // Replace with your deployed contract's address
 
         // Convert amount to BigInt for v6 compatibility
         const amount = hre.ethers.parseEther(taskArgs.amount);

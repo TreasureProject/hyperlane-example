@@ -71,6 +71,32 @@ contract HypERC1155 is ERC1155SupplyUpgradeable, TokenRouter {
         return "";
     }
 
+    function transferRemoteBatch(
+        uint32 destination,
+        bytes32 recipient,
+        uint256[] calldata tokenIds,
+        uint256[] calldata amounts
+    ) external payable returns (uint256[] memory remainingIds, uint256[] memory remainingAmounts) {
+        require(tokenIds.length == amounts.length, "Length mismatch");
+
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            try
+                this.transferRemote(destination, recipient, _packValues(tokenIds[i], amounts[i]))
+            {} catch {
+                uint256 remaining = tokenIds.length - i;
+                remainingIds = new uint256[](remaining);
+                remainingAmounts = new uint256[](remaining);
+                for (uint256 j = 0; j < remaining; j++) {
+                    remainingIds[j] = tokenIds[i + j];
+                    remainingAmounts[j] = amounts[i + j];
+                }
+                return (remainingIds, remainingAmounts);
+            }
+        }
+        return (new uint256[](0), new uint256[](0));
+    }
+
+
     function _transferTo(
         address recipient,
         uint256 packed,

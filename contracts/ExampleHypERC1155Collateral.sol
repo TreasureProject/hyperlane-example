@@ -37,7 +37,6 @@ contract HypERC1155Collateral is TokenRouter, ERC1155Holder {
         _MailboxClient_initialize(_hook, _interchainSecurityModule, _owner);
         _name = tokenName;
         _symbol = tokenSymbol;
-        _transferOwnership(_owner);
     }
 
     function transferRemote(

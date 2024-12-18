@@ -1,26 +1,6 @@
-// interface HLConfig {
-//     srcChain: string;
-//     pairing: {
-//         contract: string;
-//         peers: {
-//             contractName: string;
-//             destChain: string;
-//         }[];
-//     }[];
-//     gasConfig: {
-//         destinationGas: {
-//             [domain: number]: number;
-//         };
-//     };
-//     // Optional overrides
-//     customIsm?: string;
-//     customIgp?: string;
-// }
-//
-
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { TOKEN_MAPPING } from "../config";
+import { HYPERCHAIN_CONFIG } from "../config";
 import { TokenRouter__factory } from "../typechain-types";
 
 task("enroll-routers", "Enrolls remote routers for token").setAction(
@@ -28,27 +8,38 @@ task("enroll-routers", "Enrolls remote routers for token").setAction(
         const { network, ethers } = hre;
         const [signer] = await ethers.getSigners();
 
-        const networkConfig = TOKEN_MAPPING.find((n) => n.srcChain === network.name);
-        if (!networkConfig) {
-            throw new Error(`No config found for ${network.name}`);
-        }
+        const routerConfigs = HYPERCHAIN_CONFIG.routers;
 
-        if (!network.config.lzMailbox) {
-            throw new Error("lzMailbox must be defined for the network");
-        }
+        for (const routerConfig of routerConfigs) {
+            // Find the address for the current network
+            const srcAddr = routerConfig.addresses[network.name];
+            if (!srcAddr) continue;
 
-        for (const { srcAddr, peers } of networkConfig.pairing) {
             const token = TokenRouter__factory.connect(srcAddr, signer);
 
-            console.log("enrolling router");
-            for (const peer of peers) {
-                console.log(peer);
+            // Get the peers for this network
+            const peerNetworks = routerConfig.peerMap[network.name];
+
+            if (peerNetworks.length === 0) {
+                throw new Error("Peers must be specified for enrollment");
+            }
+
+            console.log(`Enrolling router for ${routerConfig.contract}`);
+
+            for (const peerNetwork of peerNetworks) {
+                const peerAddr = routerConfig.addresses[peerNetwork];
+                const peerChainId = HYPERCHAIN_CONFIG.chains[peerNetwork].id;
+
+                if (!peerAddr) {
+                    throw new Error("No peer addresses found, please add them to the config");
+                }
+
                 const enroll = await token.enrollRemoteRouter(
-                    peer.chainId,
-                    ethers.zeroPadValue(peer.destAddr, 32),
+                    peerChainId,
+                    ethers.zeroPadValue(peerAddr, 32),
                 );
                 await enroll.wait(3);
-                console.log(peer.contract, "enrolled");
+                console.log(`${peerNetwork} router enrolled`);
             }
         }
     },

@@ -29,13 +29,13 @@ export const TOKEN_MAPPING: HLConfig[] = [
         pairing: [
             {
                 // Contract name a router contract on the src chain
-                contract: "MyCustomHypERC20",
-                srcAddr: "0xd99D843C9Cab9FF5AabeC20aCCfd1D3b58656f31",
+                contract: "HypERC1155",
+                srcAddr: "0xB3ea9dF901a9728DBCb3D5dc4a9498016FbB91Bb",
                 // cross chain peers
                 peers: [
                     {
-                        contract: "MyCustomHypERC20",
-                        destAddr: "0xD7dB5038fb3a06A3bfeD6bab3b7E526d1f241277",
+                        contract: "HypERC1155",
+                        destAddr: "0x413327b27FC728BBB91D681d2f36b2E02E1eDe17",
                         chainId: 11155111,
                     },
                 ],
@@ -52,12 +52,12 @@ export const TOKEN_MAPPING: HLConfig[] = [
         srcChain: "sepolia",
         pairing: [
             {
-                contract: "MyCustomHypERC20",
-                srcAddr: "0xD7dB5038fb3a06A3bfeD6bab3b7E526d1f241277",
+                contract: "HypERC1155",
+                srcAddr: "0x413327b27FC728BBB91D681d2f36b2E02E1eDe17",
                 peers: [
                     {
                         contract: "MyCustomHypERC20",
-                        destAddr: "0xd99D843C9Cab9FF5AabeC20aCCfd1D3b58656f31",
+                        destAddr: "0xB3ea9dF901a9728DBCb3D5dc4a9498016FbB91Bb",
                         chainId: 421614,
                     },
                 ],

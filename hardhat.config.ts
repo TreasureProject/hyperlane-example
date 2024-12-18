@@ -48,6 +48,10 @@ const config: HardhatUserConfig = {
             lzMailbox: "0xfFAEF09B3cd11D9b20d1a19bECca54EEC2884766",
         },
     },
+    typechain: {
+        outDir: "typechain-types",
+        target: "ethers-v6",
+    },
 };
 
 export default config;

@@ -1,21 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity >=0.8.0;
 
-import { TokenRouter } from "@hyperlane-xyz/core/contracts/token/libs/TokenRouter.sol";
-import { ERC1155Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
-import { ERC1155SupplyUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
-
-/**
- * @title Unofficial and UNAUDITED Hyperlane ERC1155 Token Router
- * @notice Enables cross-chain ERC1155 token transfers using Hyperlane's messaging protocol
- * @dev Compatible with existing Hyperlane protocol deployments by packing tokenId and amount
- * into a single uint256. Uses standard TokenRouter interface without modifications.
- * Limitation: Both tokenId and amount must be <= type(uint128).max
- */
+import {TokenRouter} from "@hyperlane-xyz/core/contracts/token/libs/TokenRouter.sol";
+import {ERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
 
 contract HypERC1155 is ERC1155SupplyUpgradeable, TokenRouter {
     string private _name;
     string private _symbol;
+    mapping(uint256 => string) private _tokenURIs;
 
     event RemoteTransfer(
         uint32 indexed destination,
@@ -47,6 +40,24 @@ contract HypERC1155 is ERC1155SupplyUpgradeable, TokenRouter {
         _MailboxClient_initialize(_hook, _interchainSecurityModule, _owner);
         _name = tokenName;
         _symbol = tokenSymbol;
+    }
+
+    function mint(address to, uint256 id, uint256 amount) external onlyOwner {
+        _mint(to, id, amount, "");
+    }
+
+    function setURI(uint256 tokenId, string memory newuri) external onlyOwner {
+        _tokenURIs[tokenId] = newuri;
+    }
+
+    function uri(uint256 tokenId) public view override returns (string memory) {
+        string memory tokenURI = _tokenURIs[tokenId];
+
+        if (bytes(tokenURI).length > 0) {
+            return tokenURI;
+        }
+
+        return super.uri(tokenId);
     }
 
     function transferRemote(
@@ -95,7 +106,6 @@ contract HypERC1155 is ERC1155SupplyUpgradeable, TokenRouter {
         }
         return (new uint256[](0), new uint256[](0));
     }
-
 
     function _transferTo(
         address recipient,

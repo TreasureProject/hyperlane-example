@@ -24,13 +24,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         from: deployer,
         args: [network.config.lzMailbox],
         log: true,
-        waitConfirmations: 1,
+        waitConfirmations: 5,
     });
 
     const HypERC1155Factory = await hre.ethers.getContractFactory("HypERC1155");
     const contract = HypERC1155Factory.attach(hypERC1155.address).connect(signer) as HypERC1155;
 
-    await contract.initialize(
+    console.log("Initializing...");
+    const init = await contract.initialize(
         "ipfs://bafkreihyxwx3vqlmvt5d3spuvkgjztcih4sva2xhoytbzdnrfjwq3roneq",
         "HyperlaneERC1155",
         "HYPER",
@@ -38,6 +39,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         hre.ethers.ZeroAddress,
         deployer,
     );
+    init.wait(2);
+    console.log("Done!");
+
+    console.log("minting 10 of token id 1");
+
+    const mint = await contract.mint(deployer, 1n, 10n);
+    mint.wait(1);
+    console.log("mint done!");
 };
 
 func.tags = ["HypERC1155"];

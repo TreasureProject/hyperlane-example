@@ -5,6 +5,14 @@ import {TokenRouter} from "@hyperlane-xyz/core/contracts/token/libs/TokenRouter.
 import {ERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
 import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
 
+/**
+ * @title Unofficial and UNAUDITED Hyperlane ERC1155 Token Router
+ * @notice Enables cross-chain ERC1155 token transfers using Hyperlane's messaging protocol
+ * @dev Compatible with existing Hyperlane protocol deployments by packing tokenId and amount
+ * into a single uint256. Uses standard TokenRouter interface without modifications.
+ * Limitation: Both tokenId and amount must be <= type(uint128).max
+ */
+
 contract HypERC1155 is ERC1155SupplyUpgradeable, TokenRouter {
     string private _name;
     string private _symbol;
@@ -13,11 +21,16 @@ contract HypERC1155 is ERC1155SupplyUpgradeable, TokenRouter {
     event RemoteTransfer(
         uint32 indexed destination,
         bytes32 indexed recipient,
-        uint256 indexed tokenId,
-        uint256 amount
+        uint128 indexed tokenId,
+        uint128 amount
     );
 
-    error InsufficientBalance(address from, uint256 tokenId, uint256 amount);
+    error InsufficientBalance(address from, uint128 tokenId, uint128 amount);
+    error TokenTransferLengthMismatch(uint128 tokenIdLength, uint128 amountLength);
+    error TokenTransferValueTooLarge(uint256 value);
+    error EmptyArrays();
+    error UseERC1155BalanceOf();
+    error ZeroAmount();
 
     constructor(address _mailbox) TokenRouter(_mailbox) {}
 
@@ -46,7 +59,7 @@ contract HypERC1155 is ERC1155SupplyUpgradeable, TokenRouter {
         _mint(to, id, amount, "");
     }
 
-    function setURI(uint256 tokenId, string memory newuri) external onlyOwner {
+    function setURI(uint128 tokenId, string memory newuri) external onlyOwner {
         _tokenURIs[tokenId] = newuri;
     }
 
@@ -63,8 +76,8 @@ contract HypERC1155 is ERC1155SupplyUpgradeable, TokenRouter {
     function transferRemote(
         uint32 destination,
         bytes32 recipient,
-        uint256 tokenId,
-        uint256 amount
+        uint128 tokenId,
+        uint128 amount
     ) external payable returns (bytes32) {
         uint256 packed = _packValues(tokenId, amount);
         emit RemoteTransfer(destination, recipient, tokenId, amount);
@@ -72,7 +85,7 @@ contract HypERC1155 is ERC1155SupplyUpgradeable, TokenRouter {
     }
 
     function _transferFromSender(uint256 packed) internal virtual override returns (bytes memory) {
-        (uint256 tokenId, uint256 amount) = _unpackValues(packed);
+        (uint128 tokenId, uint128 amount) = _unpackValues(packed);
 
         if (balanceOf(msg.sender, tokenId) < amount) {
             revert InsufficientBalance(msg.sender, tokenId, amount);
@@ -85,26 +98,30 @@ contract HypERC1155 is ERC1155SupplyUpgradeable, TokenRouter {
     function transferRemoteBatch(
         uint32 destination,
         bytes32 recipient,
-        uint256[] calldata tokenIds,
-        uint256[] calldata amounts
-    ) external payable returns (uint256[] memory remainingIds, uint256[] memory remainingAmounts) {
-        require(tokenIds.length == amounts.length, "Length mismatch");
+        uint128[] calldata tokenIds,
+        uint128[] calldata amounts
+    ) external payable returns (uint128[] memory remainingIds, uint128[] memory remainingAmounts) {
+        if (tokenIds.length == 0 || amounts.length == 0) revert EmptyArrays();
 
-        for (uint256 i = 0; i < tokenIds.length; i++) {
+        if (tokenIds.length != amounts.length) {
+            revert TokenTransferLengthMismatch(uint128(tokenIds.length), uint128(amounts.length));
+        }
+
+        for (uint128 i = 0; i < tokenIds.length; i++) {
             try
                 this.transferRemote(destination, recipient, _packValues(tokenIds[i], amounts[i]))
             {} catch {
-                uint256 remaining = tokenIds.length - i;
-                remainingIds = new uint256[](remaining);
-                remainingAmounts = new uint256[](remaining);
-                for (uint256 j = 0; j < remaining; j++) {
+                uint128 remaining = uint128(tokenIds.length) - i;
+                remainingIds = new uint128[](remaining);
+                remainingAmounts = new uint128[](remaining);
+                for (uint128 j = 0; j < remaining; j++) {
                     remainingIds[j] = tokenIds[i + j];
                     remainingAmounts[j] = amounts[i + j];
                 }
                 return (remainingIds, remainingAmounts);
             }
         }
-        return (new uint256[](0), new uint256[](0));
+        return (new uint128[](0), new uint128[](0));
     }
 
     function _transferTo(
@@ -112,19 +129,17 @@ contract HypERC1155 is ERC1155SupplyUpgradeable, TokenRouter {
         uint256 packed,
         bytes calldata
     ) internal virtual override {
-        (uint256 tokenId, uint256 amount) = _unpackValues(packed);
+        (uint128 tokenId, uint128 amount) = _unpackValues(packed);
         _mint(recipient, tokenId, amount, "");
     }
 
-    function _packValues(uint256 tokenId, uint256 amount) internal pure returns (uint256) {
-        require(tokenId <= type(uint128).max, "TokenId too large");
-        require(amount <= type(uint128).max, "Amount too large");
+    function _packValues(uint128 tokenId, uint128 amount) internal pure returns (uint256) {
         return (tokenId << 128) | amount;
     }
 
-    function _unpackValues(uint256 packed) internal pure returns (uint256 tokenId, uint256 amount) {
-        tokenId = packed >> 128;
-        amount = packed & type(uint128).max;
+    function _unpackValues(uint256 packed) internal pure returns (uint128 tokenId, uint128 amount) {
+        tokenId = uint128(packed >> 128);
+        amount = uint128(packed & type(uint128).max);
     }
 
     function _beforeTokenTransfer(
@@ -135,11 +150,15 @@ contract HypERC1155 is ERC1155SupplyUpgradeable, TokenRouter {
         uint256[] memory amounts,
         bytes memory data
     ) internal virtual override(ERC1155SupplyUpgradeable) {
+        for (uint128 i = 0; i < ids.length; i++) {
+            if (ids[i] > type(uint128).max) revert TokenTransferValueTooLarge(ids[i]);
+            if (amounts[i] > type(uint128).max) revert TokenTransferValueTooLarge(amounts[i]);
+        }
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
 
     function balanceOf(address) public pure override(TokenRouter) returns (uint256) {
-        revert("Use balanceOf(address,uint256)");
+        revert UseERC1155BalanceOf();
     }
 
     function name() public view returns (string memory) {

@@ -13,7 +13,9 @@ task("enroll-routers", "Enrolls remote routers for token").setAction(
         for (const routerConfig of routerConfigs) {
             // Find the address for the current network
             const srcAddr = routerConfig.addresses[network.name];
-            if (!srcAddr) continue;
+            if (!srcAddr) {
+                throw new Error("network must be defined identically to hardhat.config");
+            }
 
             const token = TokenRouter__factory.connect(srcAddr, signer);
 
@@ -24,7 +26,7 @@ task("enroll-routers", "Enrolls remote routers for token").setAction(
                 throw new Error("Peers must be specified for enrollment");
             }
 
-            console.log(`Enrolling router for ${routerConfig.contract}`);
+            console.log(`Enrolling router for ${routerConfig.contract} on ${hre.network.name}`);
 
             for (const peerNetwork of peerNetworks) {
                 const peerAddr = routerConfig.addresses[peerNetwork];

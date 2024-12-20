@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { HYPERCHAIN_CONFIG } from "../config";
+import { HYPERLANE_CONFIG } from "../config";
 import { TokenRouter__factory } from "../typechain-types";
 
 task("enroll-routers", "Enrolls remote routers for token").setAction(
@@ -8,40 +8,35 @@ task("enroll-routers", "Enrolls remote routers for token").setAction(
         const { network, ethers } = hre;
         const [signer] = await ethers.getSigners();
 
-        const routerConfigs = HYPERCHAIN_CONFIG.routers;
-
-        for (const routerConfig of routerConfigs) {
-            // Find the address for the current network
-            const srcAddr = routerConfig.addresses[network.name];
-            if (!srcAddr) {
-                throw new Error("network must be defined identically to hardhat.config");
+        for (const routerConfig of HYPERLANE_CONFIG.routers) {
+            const currentNetwork = routerConfig.networks[network.name];
+            if (!currentNetwork) {
+                throw new Error("network name not found in config");
             }
 
-            const token = TokenRouter__factory.connect(srcAddr, signer);
+            const token = TokenRouter__factory.connect(currentNetwork.address, signer);
 
-            // Get the peers for this network
-            const peerNetworks = routerConfig.peerMap[network.name];
+            for (const peer of currentNetwork.peers) {
+                const peerChainId = hre.network.config.chainId;
 
-            if (peerNetworks.length === 0) {
-                throw new Error("Peers must be specified for enrollment");
-            }
+                if (!peerChainId) {
+                    throw new Error(`No chain ID found for ${peer.networkName}`);
+                }
 
-            console.log(`Enrolling router for ${routerConfig.contract} on ${hre.network.name}`);
+                if (peer.hook) {
+                    await token.setHook(peer.hook);
+                }
 
-            for (const peerNetwork of peerNetworks) {
-                const peerAddr = routerConfig.addresses[peerNetwork];
-                const peerChainId = HYPERCHAIN_CONFIG.chains[peerNetwork].id;
-
-                if (!peerAddr) {
-                    throw new Error("No peer addresses found, please add them to the config");
+                if (peer.ism) {
+                    await token.setInterchainSecurityModule(peer.ism);
                 }
 
                 const enroll = await token.enrollRemoteRouter(
                     peerChainId,
-                    ethers.zeroPadValue(peerAddr, 32),
+                    ethers.zeroPadValue(peer.address, 32),
                 );
-                await enroll.wait(3);
-                console.log(`${peerNetwork} router enrolled`);
+                await enroll.wait(2);
+                console.log(`${peer.networkName} router enrolled`);
             }
         }
     },

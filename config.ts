@@ -24,16 +24,16 @@ export const HYPERLANE_CONFIG: HyperlaneConfig = {
             contract: "HypERC1155",
             networks: {
                 // networks the above named contract is deployed on
-                sepolia: {
+                opsepolia: {
                     //address of the contract on the specified network
-                    address: "0xb2B4bCEF2094c7a56f4C6B",
+                    address: "0x80e652A3A593fB6198424fd049E64B06363238F8",
 
                     // contract address and network (as defined in hardhat config)
                     // you want to pair the top level contract with
                     peers: [
                         {
                             networkName: "arbsepolia",
-                            address: "0x8614b2565b5454Dd4",
+                            address: "0x51fFDb0EE7104019Bc3e63C7914aFc2095a06504",
                         },
                     ],
                 },
@@ -43,11 +43,11 @@ export const HYPERLANE_CONFIG: HyperlaneConfig = {
             contract: "HypERC1155Collateral",
             networks: {
                 arbsepolia: {
-                    address: "0x8614b2565b5454Dd",
+                    address: "0x51fFDb0EE7104019Bc3e63C7914aFc2095a06504",
                     peers: [
                         {
-                            networkName: "sepolia",
-                            address: "0xb2B4bCEF2094c7a56f4C6",
+                            networkName: "opsepolia",
+                            address: "0x80e652A3A593fB6198424fd049E64B06363238F8",
                         },
                     ],
                 },
@@ -56,7 +56,7 @@ export const HYPERLANE_CONFIG: HyperlaneConfig = {
     ],
     gasConfig: {
         421614: { 11155111: 500000 },
-        11155111: { 421614: 200000 },
+        11155111: { 421614: 500000 },
     },
 };
 // // Example config

@@ -24,16 +24,16 @@ export const HYPERLANE_CONFIG: HyperlaneConfig = {
             contract: "HypERC1155",
             networks: {
                 // networks the above named contract is deployed on
-                sepolia: {
+                topaz: {
                     //address of the contract on the specified network
-                    address: "0xEc25775680632F60c9b95c9b87B7681Fb2EEbdd2",
+                    address: "0x6339D171538988C827C351eE5675281d7F52aA43",
 
                     // contract address and network (as defined in hardhat config)
                     // you want to pair the top level contract with
                     peers: [
                         {
-                            networkName: "arbsepolia",
-                            address: "0xB209D2C6a30dE0ef713d38d7Af4819f3A83b1bac",
+                            networkName: "sepolia",
+                            address: "0xdb7f6A5f793C93F3666b80A563d69cF38A28E5b9",
                         },
                     ],
                 },
@@ -42,12 +42,12 @@ export const HYPERLANE_CONFIG: HyperlaneConfig = {
         {
             contract: "HypERC1155Collateral",
             networks: {
-                arbsepolia: {
-                    address: "0xB209D2C6a30dE0ef713d38d7Af4819f3A83b1bac",
+                sepolia: {
+                    address: "0xdb7f6A5f793C93F3666b80A563d69cF38A28E5b9",
                     peers: [
                         {
-                            networkName: "sepolia",
-                            address: "0xEc25775680632F60c9b95c9b87B7681Fb2EEbdd2",
+                            networkName: "topaz",
+                            address: "0x6339D171538988C827C351eE5675281d7F52aA43",
                         },
                     ],
                 },
@@ -55,8 +55,8 @@ export const HYPERLANE_CONFIG: HyperlaneConfig = {
         },
     ],
     gasConfig: {
-        421614: { 11155111: 500000 },
-        11155111: { 421614: 500000 },
+        421614: { 11155111: 40000 },
+        11155111: { 421614: 50000 },
     },
 };
 // // Example config

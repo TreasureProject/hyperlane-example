@@ -1,8 +1,8 @@
 import "dotenv/config";
 import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-ethers";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-deploy";
+import "@matterlabs/hardhat-zksync";
 
 import "./tasks/mintErc20";
 import "./tasks/transfer";
@@ -54,6 +54,14 @@ const config: HardhatUserConfig = {
             accounts: [process.env.PRIVATE_KEY],
             chainId: 11155420,
             lzMailbox: "0x6966b0E55883d49BFB24539356a2f8A673E02039",
+        },
+        topaz: {
+            accounts: [process.env.PRIVATE_KEY],
+            url: "https://rpc.topaz.treasure.lol",
+            ethNetwork: "sepolia",
+            zksync: true,
+            chainId: 978658,
+            lzMailbox: "0x28f448885bEaaF662f8A9A6c9aF20fAd17A5a1DC",
         },
     },
     typechain: {

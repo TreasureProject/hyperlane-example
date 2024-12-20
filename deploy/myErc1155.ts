@@ -24,7 +24,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     console.log("minting");
 
-    const mint = await contract.mint(deployer, 1n, 1n, "0x");
+    const mint = await contract.mint(deployer, 1n, 100n, "0x");
 
     mint.wait(1);
 };

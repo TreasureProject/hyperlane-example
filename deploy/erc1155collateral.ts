@@ -14,7 +14,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const hypERC1155Collateral = await deploy("HypERC1155Collateral", {
         from: deployer,
-        args: ["0xec6Cb36a78a9368901CE2aB467Fca0A3179889b8", network.config.lzMailbox],
+        args: ["0xeC23817526072F71EdA9aa5EB0A8f070fA1f133c", network.config.lzMailbox],
         log: true,
         waitConfirmations: 2,
     });

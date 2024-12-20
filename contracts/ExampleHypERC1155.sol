@@ -18,13 +18,6 @@ contract HypERC1155 is ERC1155SupplyUpgradeable, TokenRouter {
     string private _symbol;
     mapping(uint256 => string) private _tokenURIs;
 
-    event RemoteTransfer(
-        uint32 indexed destination,
-        bytes32 indexed recipient,
-        uint128 indexed tokenId,
-        uint128 amount
-    );
-
     error InsufficientBalance(address from, uint128 tokenId, uint128 amount);
     error TokenTransferLengthMismatch(uint128 tokenIdLength, uint128 amountLength);
     error TokenTransferValueTooLarge(uint256 value);
@@ -80,7 +73,6 @@ contract HypERC1155 is ERC1155SupplyUpgradeable, TokenRouter {
         uint128 amount
     ) external payable returns (bytes32) {
         uint256 packed = _packValues(tokenId, amount);
-        emit RemoteTransfer(destination, recipient, tokenId, amount);
         return this.transferRemote(destination, recipient, packed);
     }
 

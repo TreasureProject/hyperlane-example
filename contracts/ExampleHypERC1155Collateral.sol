@@ -6,15 +6,6 @@ import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {IERC1155MetadataURI} from "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
 
-/**
- * @title Unofficial and UNAUDITED Hyperlane ERC1155 Token Collateral
- * @notice Enables cross-chain transfers of existing ERC1155 tokens using Hyperlane
- * @dev Holds original tokens as collateral while wrapped versions are minted on other chains
- * @dev Compatible with existing Hyperlane protocol deployments by packing tokenId and amount
- * into a single uint256. Uses standard TokenRouter interface without modifications.
- * Limitation: Both tokenId and amount must be <= type(uint128).max
- */
-
 interface IERC1155WithMetadata {
     function name() external view returns (string memory);
     function symbol() external view returns (string memory);
@@ -37,57 +28,63 @@ contract HypERC1155Collateral is TokenRouter, ERC1155Holder {
     error UseERC1155BalanceOf();
     error ZeroAmount();
 
-    constructor(address erc1155, address _mailbox) TokenRouter(_mailbox) {
-        wrappedToken = IERC1155MetadataURI(erc1155);
+    constructor(address erc1155_, address mailbox_) TokenRouter(mailbox_) {
+        wrappedToken = IERC1155MetadataURI(erc1155_);
     }
 
     function initialize(
-        address _hook,
-        address _interchainSecurityModule,
-        address _owner
+        address hook_,
+        address interchainSecurityModule_,
+        address owner_
     ) public virtual initializer {
-        _MailboxClient_initialize(_hook, _interchainSecurityModule, _owner);
+        _MailboxClient_initialize(hook_, interchainSecurityModule_, owner_);
     }
 
     function transferRemote(
-        uint32 destination,
-        bytes32 recipient,
-        uint128 tokenId,
-        uint128 amount
+        uint32 destination_,
+        bytes32 recipient_,
+        uint128 tokenId_,
+        uint128 amount_
     ) external payable returns (bytes32) {
-        uint256 packed = _packValues(tokenId, amount);
-        emit RemoteTransfer(destination, recipient, tokenId, amount);
-        return this.transferRemote(destination, recipient, packed);
+        uint256 packed = _packValues(tokenId_, amount_);
+        emit RemoteTransfer(destination_, recipient_, tokenId_, amount_);
+        return this.transferRemote(destination_, recipient_, packed);
     }
 
-    function _transferFromSender(uint256 packed) internal virtual override returns (bytes memory) {
-        (uint128 tokenId, uint128 amount) = _unpackValues(packed);
+    function _transferFromSender(uint256 packed_) internal virtual override returns (bytes memory) {
+        (uint128 tokenId, uint128 amount) = _unpackValues(packed_);
         wrappedToken.safeTransferFrom(msg.sender, address(this), tokenId, amount, "");
         return "";
     }
 
     function transferRemoteBatch(
-        uint32 destination,
-        bytes32 recipient,
-        uint128[] calldata tokenIds,
-        uint128[] calldata amounts
+        uint32 destination_,
+        bytes32 recipient_,
+        uint128[] calldata tokenIds_,
+        uint128[] calldata amounts_
     ) external payable returns (uint128[] memory remainingIds, uint128[] memory remainingAmounts) {
-        if (tokenIds.length == 0 || amounts.length == 0) revert EmptyArrays();
-
-        if (tokenIds.length != amounts.length) {
-            revert TokenTransferLengthMismatch(uint128(tokenIds.length), uint128(amounts.length));
+        if (tokenIds_.length == 0 || amounts_.length == 0) {
+            revert EmptyArrays();
         }
 
-        for (uint128 i = 0; i < tokenIds.length; i++) {
+        if (tokenIds_.length != amounts_.length) {
+            revert TokenTransferLengthMismatch(uint128(tokenIds_.length), uint128(amounts_.length));
+        }
+
+        for (uint128 i = 0; i < tokenIds_.length; i++) {
             try
-                this.transferRemote(destination, recipient, _packValues(tokenIds[i], amounts[i]))
+                this.transferRemote(
+                    destination_,
+                    recipient_,
+                    _packValues(tokenIds_[i], amounts_[i])
+                )
             {} catch {
-                uint128 remaining = uint128(tokenIds.length) - i;
+                uint128 remaining = uint128(tokenIds_.length) - i;
                 remainingIds = new uint128[](remaining);
                 remainingAmounts = new uint128[](remaining);
                 for (uint128 j = 0; j < remaining; j++) {
-                    remainingIds[j] = tokenIds[i + j];
-                    remainingAmounts[j] = amounts[i + j];
+                    remainingIds[j] = tokenIds_[i + j];
+                    remainingAmounts[j] = amounts_[i + j];
                 }
                 return (remainingIds, remainingAmounts);
             }
@@ -96,21 +93,23 @@ contract HypERC1155Collateral is TokenRouter, ERC1155Holder {
     }
 
     function _transferTo(
-        address recipient,
-        uint256 packed,
+        address recipient_,
+        uint256 packed_,
         bytes calldata
     ) internal virtual override {
-        (uint128 tokenId, uint128 amount) = _unpackValues(packed);
-        wrappedToken.safeTransferFrom(address(this), recipient, tokenId, amount, "");
+        (uint128 tokenId, uint128 amount) = _unpackValues(packed_);
+        wrappedToken.safeTransferFrom(address(this), recipient_, tokenId, amount, "");
     }
 
-    function _packValues(uint128 tokenId, uint128 amount) internal pure returns (uint256) {
-        return (tokenId << 128) | amount;
+    function _packValues(uint128 tokenId_, uint128 amount_) internal pure returns (uint256) {
+        return (tokenId_ << 128) | amount_;
     }
 
-    function _unpackValues(uint256 packed) internal pure returns (uint128 tokenId, uint128 amount) {
-        tokenId = uint128(packed >> 128);
-        amount = uint128(packed & type(uint128).max);
+    function _unpackValues(
+        uint256 packed_
+    ) internal pure returns (uint128 tokenId, uint128 amount) {
+        tokenId = uint128(packed_ >> 128);
+        amount = uint128(packed_ & type(uint128).max);
     }
 
     function name() public view returns (string memory) {
@@ -121,19 +120,19 @@ contract HypERC1155Collateral is TokenRouter, ERC1155Holder {
         return IERC1155WithMetadata(address(wrappedToken)).symbol();
     }
 
-    function uri(uint256 id) public view returns (string memory) {
-        return wrappedToken.uri(id);
+    function uri(uint256 id_) public view returns (string memory) {
+        return wrappedToken.uri(id_);
     }
 
-    function totalSupply(uint256 id) public view returns (uint256) {
-        return wrappedToken.balanceOf(address(this), id);
+    function totalSupply(uint256 id_) public view returns (uint256) {
+        return wrappedToken.balanceOf(address(this), id_);
     }
 
     function balanceOf(address) public pure override(TokenRouter) returns (uint256) {
         revert UseERC1155BalanceOf();
     }
 
-    function balanceOf(address account, uint256 id) public view returns (uint256) {
-        return wrappedToken.balanceOf(account, id);
+    function balanceOf(address account_, uint256 id_) public view returns (uint256) {
+        return wrappedToken.balanceOf(account_, id_);
     }
 }

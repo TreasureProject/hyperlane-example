@@ -6,6 +6,14 @@ import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {ERC1155Holder} from "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import {IERC1155MetadataURI} from "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
 
+/**
+ * @title Unofficial and UNAUDITED Hyperlane ERC1155Collateral Token Router
+ * @notice Enables cross-chain ERC1155 token transfers using Hyperlane's messaging protocol
+ * @dev Compatible with existing Hyperlane protocol deployments by packing tokenId and amount
+ * into a single uint256. Uses standard TokenRouter interface without modifications.
+ * Limitation: Both tokenId and amount must be <= type(uint128).max
+ */
+
 interface IERC1155WithMetadata {
     function name() external view returns (string memory);
     function symbol() external view returns (string memory);
@@ -13,13 +21,6 @@ interface IERC1155WithMetadata {
 
 contract HypERC1155Collateral is TokenRouter, ERC1155Holder {
     IERC1155MetadataURI public immutable wrappedToken;
-
-    event RemoteTransfer(
-        uint32 indexed destination,
-        bytes32 indexed recipient,
-        uint128 indexed tokenId,
-        uint128 amount
-    );
 
     error InsufficientBalance(address from, uint128 tokenId, uint128 amount);
     error TokenTransferLengthMismatch(uint128 tokenIdLength, uint128 amountLength);

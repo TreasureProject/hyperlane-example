@@ -48,7 +48,6 @@ contract HypERC1155Collateral is TokenRouter, ERC1155Holder {
         uint128 amount_
     ) external payable returns (bytes32) {
         uint256 packed = _packValues(tokenId_, amount_);
-        emit RemoteTransfer(destination_, recipient_, tokenId_, amount_);
         return this.transferRemote(destination_, recipient_, packed);
     }
 

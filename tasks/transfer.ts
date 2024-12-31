@@ -1,5 +1,4 @@
 import { task } from "hardhat/config";
-import { TokenRouter__factory } from "../typechain-types";
 
 task("transfer-1155", "Transfer ERC1155 tokens across chains")
     .addParam("dest", "Destination domain")
@@ -8,14 +7,15 @@ task("transfer-1155", "Transfer ERC1155 tokens across chains")
     .addParam("amt", "Amount to transfer")
     .setAction(async (taskArgs, { ethers, deployments }) => {
         const [signer] = await ethers.getSigners();
-        const deployment = await deployments.get("HypERC1155");
-        const tokenContract = TokenRouter__factory.connect(deployment.address, signer);
+
+        const HypERC1155 = await deployments.get("HypERC1155");
+        const tokenContract = await ethers.getContractAt("TokenRouter", HypERC1155.address, signer);
+
         const quote = await tokenContract.quoteGasPayment(parseInt(taskArgs.dest));
 
         // Pack tokenId and amount using contract's _packValues method
         const packedValue = (BigInt(taskArgs.tokenid) << 128n) | BigInt(taskArgs.amt);
 
-        //@ts-expect-error package types wrong
         const tx = await tokenContract.transferRemote(
             parseInt(taskArgs.dest),
             ethers.zeroPadValue(taskArgs.recipient, 32),

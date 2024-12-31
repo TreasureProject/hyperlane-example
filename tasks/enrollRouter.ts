@@ -1,11 +1,10 @@
 import { task } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { HYPERLANE_CONFIG } from "../config";
-import { TokenRouter__factory } from "../typechain-types";
 
 task("enroll-routers", "Enrolls remote routers for token").setAction(
     async (_, hre: HardhatRuntimeEnvironment) => {
-        const { network, ethers, config } = hre;
+        const { network, ethers, config, deployments } = hre;
         const [signer] = await ethers.getSigners();
 
         const peerConfig = HYPERLANE_CONFIG.routers.find((conf) => conf.networks[network.name]);
@@ -29,12 +28,12 @@ task("enroll-routers", "Enrolls remote routers for token").setAction(
         const address = peerConfig["networks"][network.name].address;
         const peers = peerConfig["networks"][network.name].peers;
 
-        const token = TokenRouter__factory.connect(address, signer);
+        const deployment = await deployments.get("TokenRouter");
+        const token = await ethers.getContractAt("TokenRouter", deployment.address, signer);
 
         console.log(address);
         for (const { networkName, ism, hook, address } of peers) {
             if (routerGasConfigs.length > 0) {
-                //@ts-expect-error types wrong
                 const gasConfigTx = await token.setDestinationGas(routerGasConfigs);
                 await gasConfigTx.wait(1);
                 console.log("Gas configs set");
@@ -43,13 +42,13 @@ task("enroll-routers", "Enrolls remote routers for token").setAction(
             if (hook) {
                 console.log("setting hook");
                 const hookTx = await token.setHook(hook);
-                hookTx.wait(2);
+                await hookTx.wait(2);
             }
 
             if (ism) {
                 console.log("setting ISM");
                 const ismTx = await token.setInterchainSecurityModule(ism);
-                ismTx.wait(2);
+                await ismTx.wait(2);
             }
 
             const peerChainId = config.networks[networkName].chainId;
@@ -63,7 +62,7 @@ task("enroll-routers", "Enrolls remote routers for token").setAction(
                 ethers.zeroPadValue(address, 32),
             );
 
-            enroll.wait(1);
+            await enroll.wait(1);
             console.log("enrolled");
         }
     },

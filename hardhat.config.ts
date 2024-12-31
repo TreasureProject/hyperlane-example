@@ -7,7 +7,6 @@ import "@matterlabs/hardhat-zksync";
 import "./tasks/mintErc20";
 import "./tasks/transfer";
 import "./tasks/enrollRouter";
-import "./tasks/log";
 import "./tasks/transferCollateral";
 
 if (typeof process.env.PRIVATE_KEY === "undefined") {

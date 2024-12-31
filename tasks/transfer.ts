@@ -16,6 +16,7 @@ task("transfer-1155", "Transfer ERC1155 tokens across chains")
         // Pack tokenId and amount using contract's _packValues method
         const packedValue = (BigInt(taskArgs.tokenid) << 128n) | BigInt(taskArgs.amt);
 
+        //@ts-expect-error package types wrong
         const tx = await tokenContract.transferRemote(
             parseInt(taskArgs.dest),
             ethers.zeroPadValue(taskArgs.recipient, 32),

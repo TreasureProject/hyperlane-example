@@ -34,6 +34,7 @@ task("enroll-routers", "Enrolls remote routers for token").setAction(
         console.log(address);
         for (const { networkName, ism, hook, address } of peers) {
             if (routerGasConfigs.length > 0) {
+                //@ts-expect-error package types wrong
                 const gasConfigTx = await token.setDestinationGas(routerGasConfigs);
                 await gasConfigTx.wait(1);
                 console.log("Gas configs set");

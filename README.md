@@ -1,6 +1,6 @@
 # Hyperlane Cross-Chain Scripts Documentation
 
-## Transfer Collateral Script
+### Transfer Collateral Script
 
 A script for transferring wrapped ERC1155 tokens across different chains using Hyperlane's cross-chain messaging protocol.
 

@@ -110,15 +110,6 @@ Setting ISM...
 Router enrolled for Topaz network
 ```
 
-### Error Handling
-
-The script will exit with an error message if:
-
-- Network configuration is missing
-- Chain ID is undefined
-- Router enrollment fails
-- Gas configuration is invalid
-
 ## Transfer ERC1155 Cross-Chain Script
 
 A script to transfer ERC1155 tokens across different chains using Hyperlane's cross-chain messaging protocol.
@@ -149,25 +140,9 @@ npx hardhat run scripts/transfer1155.ts --network <network> <dest> <recipient> <
 npx hardhat run scripts/transfer1155.ts --network arbsepolia 978658 0x742d35Cc6634C0532925a3b844Bc454e4438f44e 1 100
 ```
 
-### Expected Output
-
-```
-Transaction hash: 0x...
-Transferred 100 of token ID 1 to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e
-```
-
 ## Prerequisites
 
 - Deployed HypERC1155 contract
 - Sufficient tokens in the source wallet
 - Sufficient native tokens for gas fees
 - Network configured in Hardhat config
-
-## Error Handling
-
-The script will exit with an error message if:
-
-- Required arguments are missing
-- Contract interaction fails
-- Insufficient balance or allowance
-- Network connection issues

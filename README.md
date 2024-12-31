@@ -1,5 +1,3 @@
-Here are the updated documentation files with more detailed formatting and focusing on the specified networks:
-
 # Hyperlane Cross-Chain Scripts Documentation
 
 ## Transfer Collateral Script

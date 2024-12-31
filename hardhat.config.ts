@@ -27,11 +27,11 @@ const config: HardhatUserConfig = {
         },
     },
     solidity: {
-        version: "0.8.28",
+        version: "0.8.23",
         settings: {
             optimizer: {
                 enabled: true,
-                runs: 1000,
+                runs: 800,
             },
         },
     },
@@ -48,12 +48,6 @@ const config: HardhatUserConfig = {
             chainId: 11155111,
             lzMailbox: "0xfFAEF09B3cd11D9b20d1a19bECca54EEC2884766",
         },
-        opsepolia: {
-            url: process.env.OP_SEP_URL,
-            accounts: [process.env.PRIVATE_KEY],
-            chainId: 11155420,
-            lzMailbox: "0x6966b0E55883d49BFB24539356a2f8A673E02039",
-        },
         topaz: {
             accounts: [process.env.PRIVATE_KEY],
             url: "https://rpc.topaz.treasure.lol",
@@ -61,6 +55,14 @@ const config: HardhatUserConfig = {
             zksync: true,
             chainId: 978658,
             lzMailbox: "0x28f448885bEaaF662f8A9A6c9aF20fAd17A5a1DC",
+        },
+        treasure: {
+            accounts: [process.env.PRIVATE_KEY],
+            url: "https://rpc.treasure.lol",
+            ethNetwork: "ethereum",
+            zksync: true,
+            chainId: 61166,
+            lzMailbox: "0x9BbDf86b272d224323136E15594fdCe487F40ce7",
         },
     },
     typechain: {

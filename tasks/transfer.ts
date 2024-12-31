@@ -9,7 +9,7 @@ task("transfer-1155", "Transfer ERC1155 tokens across chains")
         const [signer] = await ethers.getSigners();
 
         const HypERC1155 = await deployments.get("HypERC1155");
-        const tokenContract = await ethers.getContractAt("TokenRouter", HypERC1155.address, signer);
+        const tokenContract = await ethers.getContractAt("HypERC1155", HypERC1155.address, signer);
 
         const quote = await tokenContract.quoteGasPayment(parseInt(taskArgs.dest));
 

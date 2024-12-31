@@ -4,7 +4,7 @@ import { HYPERLANE_CONFIG } from "../config";
 
 task("enroll-routers", "Enrolls remote routers for token").setAction(
     async (_, hre: HardhatRuntimeEnvironment) => {
-        const { network, ethers, config, deployments } = hre;
+        const { network, ethers, config } = hre;
         const [signer] = await ethers.getSigners();
 
         const peerConfig = HYPERLANE_CONFIG.routers.find((conf) => conf.networks[network.name]);
@@ -28,13 +28,12 @@ task("enroll-routers", "Enrolls remote routers for token").setAction(
         const address = peerConfig["networks"][network.name].address;
         const peers = peerConfig["networks"][network.name].peers;
 
-        const deployment = await deployments.get("TokenRouter");
-        const token = await ethers.getContractAt("TokenRouter", deployment.address, signer);
+        const TokenRouter = await hre.artifacts.readArtifact("TokenRouter");
+        const token = new ethers.Contract(address, TokenRouter.abi, signer);
 
         console.log(address);
         for (const { networkName, ism, hook, address } of peers) {
             if (routerGasConfigs.length > 0) {
-                //@ts-expect-error package types wrong
                 const gasConfigTx = await token.setDestinationGas(routerGasConfigs);
                 await gasConfigTx.wait(1);
                 console.log("Gas configs set");

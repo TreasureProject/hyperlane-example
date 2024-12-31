@@ -92,14 +92,16 @@ npx hardhat transfer-1155-collateral --dest <domain> --recipient <address> --tok
 | tokenid   | Token ID to transfer  |
 | amt       | Amount of tokens      |
 
-## Supported Networks
+## Configured Networks
 
-| Network          | Chain ID | Type    |
-| ---------------- | -------- | ------- |
-| Arbitrum Sepolia | 421614   | L2      |
-| Sepolia          | 11155111 | Testnet |
-| Topaz            | 978658   | zkSync  |
-| Treasure         | 61166    | zkSync  |
+> you can always add more!
+
+| Network          | Chain ID |
+| ---------------- | -------- |
+| Arbitrum Sepolia | 421614   |
+| Sepolia          | 11155111 |
+| Topaz            | 978658   |
+| Treasure         | 61166    |
 
 ## Technical Implementation Details
 

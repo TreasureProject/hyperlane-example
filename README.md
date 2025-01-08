@@ -11,26 +11,26 @@ The `enroll-routers` task is crucial for establishing cross-chain communication 
 The task expects a `HYPERLANE_CONFIG` object with the following structure:
 
 ```typescript
-{
-  routers: [{
+type HyperlaneConfig = {
     networks: {
-      [networkName]: {
-        address: string,
-        peers: [{
-          networkName: string,
-          ism?: string,
-          hook?: string,
-          address: string
-        }]
-      }
-    }
-  }],
-  gasConfig: {
-    [chainId: number]: {
-      [destChainId: string]: number
-    }
-  }
-}
+        [networkName: string]: {
+            chainId: number;
+            gasAmount?: number;
+        };
+    };
+    deployments: {
+        [contractName: string]: {
+            [networkName: string]: {
+                address: string;
+                hook?: string;
+                ism?: string;
+            };
+        };
+    };
+    relationships: {
+        [contractName: string]: string[][];
+    };
+};
 ```
 
 ### Execution Steps

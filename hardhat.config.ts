@@ -1,13 +1,16 @@
 import "dotenv/config";
-import { HardhatUserConfig } from "hardhat/config";
+import { extendConfig, HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-deploy";
 import "@matterlabs/hardhat-zksync";
 
 import "./tasks/mintErc20";
 import "./tasks/transfer";
-import "./tasks/enrollRouter";
 import "./tasks/transferCollateral";
+
+extendConfig(() => {
+    require(require.resolve("./tasks/enrollRouter"));
+});
 
 if (typeof process.env.PRIVATE_KEY === "undefined") {
     throw new Error("PRIVATE KEY REQUIRED");
@@ -21,9 +24,6 @@ const config: HardhatUserConfig = {
     namedAccounts: {
         deployer: {
             default: 0,
-            421614: 0,
-            11155111: 0,
-            11155420: 0,
         },
     },
     solidity: {

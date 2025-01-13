@@ -1,6 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { TOKEN_MAPPING } from "../config";
 
 const TOKEN_CONFIG = {
     name: "MyCustomHypERC20",
@@ -13,25 +12,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts, network } = hre;
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
-
-    const networkConfig = TOKEN_MAPPING.find((n) => n.srcChain === network.name);
-    if (!networkConfig) {
-        throw new Error(`No config found for ${network.name}`);
-    }
-
-    console.log(networkConfig);
-
-    if (!network.config.lzMailbox) {
-        throw new Error("lzMailbox must be defined for the network");
-    }
-
-    const mailbox = await hre.ethers.getContractAt("IMailbox", network.config.lzMailbox);
-    console.log("got mailbox");
-    const ism = networkConfig.customIsm || (await mailbox.defaultIsm());
-    console.log("got ism");
-
-    const igp = networkConfig.customIgp || (await mailbox.defaultHook());
-    console.log("got igp");
 
     const result = await deploy(TOKEN_CONFIG.name, {
         from: deployer,

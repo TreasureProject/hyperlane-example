@@ -1,6 +1,17 @@
 import { HardhatUserConfig } from "hardhat/config";
 import config from "./hardhat.config";
 
+/**
+ * Hyperlane Configuration
+ *
+ * networks: Network information pulled from Hardhat config
+ * deployments: Contract addresses with optional hook and ISM (Interchain Security Module) addresses
+ * relationships: One-way messaging channels between networks
+ *   Format: [sourceNetwork, destinationNetwork]
+ *   Example: ["topaz", "sepolia"] means contracts on topaz can message sepolia
+ *   Note: For two-way messaging, need to define both directions explicitly
+ */
+
 type NetworkInfo = {
     chainId: number;
     gasAmount?: number;
@@ -46,6 +57,8 @@ function generateNetworkConfig(config: HardhatUserConfig) {
     return networks;
 }
 
+// Example Data
+
 export const HYPERLANE_CONFIG: HyperlaneConfig = {
     networks: generateNetworkConfig(config),
     deployments: {
@@ -53,21 +66,21 @@ export const HYPERLANE_CONFIG: HyperlaneConfig = {
             topaz: {
                 address: "0x6339D171538988C827C351eE5675281d7F52aA43",
             },
-            sepolia: {
-                address: "0xdb7f6A5f793C93F3666b80A563d69cF38A28E5b9",
-            },
         },
         HypERC1155Collateral: {
             sepolia: {
                 address: "0xdb7f6A5f793C93F3666b80A563d69cF38A28E5b9",
             },
-            topaz: {
-                address: "0x6339D171538988C827C351eE5675281d7F52aA43",
-            },
         },
     },
     relationships: {
-        HypERC1155: [["topaz", "sepolia"]],
-        HypERC1155Collateral: [["sepolia", "topaz"]],
+        HypERC1155: [
+            ["topaz", "sepolia"],
+            ["sepolia", "topaz"],
+        ],
+        HypERC1155Collateral: [
+            ["sepolia", "topaz"],
+            ["topaz", "sepolia"],
+        ],
     },
 };

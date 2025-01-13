@@ -1,21 +1,25 @@
 import { task } from "hardhat/config";
 
-task("mint", "Mints tokens to a specified address")
-    .addParam("address", "The address to mint tokens to")
-    .addParam("amount", "Amount of tokens to mint, in wei")
+task("mint-erc20", "Mints tokens to a specified address")
+    .addParam("to", "Address to mint tokens to")
+    .addParam("amount", "Amount of tokens to mint (in whole tokens)")
     .setAction(async (taskArgs, hre) => {
-        // Get the contract factory using ethers.js v6
-        const deployment = await hre.deployments.get("MyCustomHypERC20");
-        // Use getContractAt to connect to an existing contract
-        const myERC20 = await hre.ethers.getContractAt("MyCustomHypERC20", deployment.address); // Replace with your deployed contract's address
+        const { to, amount } = taskArgs;
 
-        // Convert amount to BigInt for v6 compatibility
-        const amount = hre.ethers.parseEther(taskArgs.amount);
+        const myToken = await hre.deployments.get("MyERC20");
+        const tokenContract = await hre.ethers.getContractAt("MyERC20", myToken.address);
 
-        // Call the mint function
-        const tx = await myERC20.mint(taskArgs.address, amount);
+        const decimals = await tokenContract.decimals();
 
-        console.log("Minting transaction hash:", tx.hash);
+        const mintAmount = hre.ethers.parseUnits(amount, decimals);
+
+        const tx = await tokenContract.mint(to, mintAmount);
         await tx.wait();
-        console.log("Tokens minted successfully!");
+
+        console.log(`Minted ${amount} tokens to ${to}`);
+
+        // Get balance after minting (formatted with proper decimals)
+        const balance = await tokenContract.balanceOf(to);
+        const formattedBalance = hre.ethers.formatUnits(balance, decimals);
+        console.log(`New balance: ${formattedBalance}`);
     });

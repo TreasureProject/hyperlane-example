@@ -4,9 +4,11 @@ import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-deploy";
 import "@matterlabs/hardhat-zksync";
 
-import "./tasks/mintErc20";
+import "./tasks/mintHypErc20";
 import "./tasks/transfer";
 import "./tasks/transferCollateral";
+import "./tasks/mintErc20";
+import "./tasks/transferErc20";
 
 extendConfig(() => {
     require(require.resolve("./tasks/enrollRouter"));

@@ -2,8 +2,8 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
 const TOKEN_CONFIG = {
-    name: "MyToken",
-    symbol: "MTK",
+    name: "MyERC20",
+    symbol: "MER",
 } as const;
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -11,11 +11,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    const args = [TOKEN_CONFIG.name, TOKEN_CONFIG.symbol];
-
-    await deploy("MyERC20", {
+    await deploy(TOKEN_CONFIG.name, {
         from: deployer,
-        args: args,
+        args: [TOKEN_CONFIG.name, TOKEN_CONFIG.symbol],
         log: true,
         waitConfirmations: 1,
     });

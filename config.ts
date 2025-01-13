@@ -1,5 +1,6 @@
 import { HardhatUserConfig } from "hardhat/config";
 import config from "./hardhat.config";
+import { HyperlaneConfig, NetworkInfo } from "./types/enrollRouterTypes";
 
 /**
  * Hyperlane Configuration
@@ -11,31 +12,6 @@ import config from "./hardhat.config";
  *   Example: ["topaz", "sepolia"] means contracts on topaz can message sepolia
  *   Note: For two-way messaging, need to define both directions explicitly
  */
-
-type NetworkInfo = {
-    chainId: number;
-    gasAmount?: number;
-};
-
-type ContractDeployment = {
-    address: string;
-    hook?: string;
-    ism?: string;
-};
-
-type HyperlaneConfig = {
-    networks: {
-        [networkName: string]: NetworkInfo;
-    };
-    deployments: {
-        [contractName: string]: {
-            [networkName: string]: ContractDeployment;
-        };
-    };
-    relationships: {
-        [contractName: string]: string[][];
-    };
-};
 
 function generateNetworkConfig(config: HardhatUserConfig) {
     const networks: { [networkName: string]: NetworkInfo } = {};
@@ -62,25 +38,19 @@ function generateNetworkConfig(config: HardhatUserConfig) {
 export const HYPERLANE_CONFIG: HyperlaneConfig = {
     networks: generateNetworkConfig(config),
     deployments: {
-        HypERC1155: {
-            topaz: {
-                address: "0x6339D171538988C827C351eE5675281d7F52aA43",
+        MyCustomHypERC20: {
+            sepolia: {
+                address: "0xd117Ee788E6e4BB24f65D744e009219861697D24",
             },
         },
-        HypERC1155Collateral: {
-            sepolia: {
-                address: "0xdb7f6A5f793C93F3666b80A563d69cF38A28E5b9",
+        MyCustomHypERC20Collateral: {
+            arbsepolia: {
+                address: "0x0fceE3f0a2d240bDBCb93627097f5491dC83Ed75",
             },
         },
     },
     relationships: {
-        HypERC1155: [
-            ["topaz", "sepolia"],
-            ["sepolia", "topaz"],
-        ],
-        HypERC1155Collateral: [
-            ["sepolia", "topaz"],
-            ["topaz", "sepolia"],
-        ],
+        MyCustomHypERC20: [["sepolia", "arbsepolia"]],
+        MyCustomHypERC20Collateral: [["arbsepolia", "sepolia"]],
     },
 };

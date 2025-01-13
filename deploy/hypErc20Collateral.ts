@@ -4,7 +4,7 @@ import { ethers } from "ethers";
 
 const TOKEN_CONFIG = {
     name: "MyCustomHypERC20Collateral",
-    existingToken: "0xYourExistingToken", // Replace with actual token address
+    existingToken: "0x8046810E0fC22D32451DE74a0B2C69bb2408EBf5", // Replace with actual token address
     hook: ethers.ZeroAddress,
     interchainSecurityModule: ethers.ZeroAddress,
 } as const;

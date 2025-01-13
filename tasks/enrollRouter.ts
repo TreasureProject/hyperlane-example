@@ -1,7 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { HYPERLANE_CONFIG } from "../config";
 import { task } from "hardhat/config";
-import { TokenRouter } from "@hyperlane-xyz/core";
+import { ContractDeployment, NetworkInfo } from "../types/enrollRouterTypes";
+import { GasRouter } from "../typechain-types";
+import { ethers } from "ethers";
 
 task("enroll-routers", "Enrolls remote routers for contracts")
     .addOptionalParam("contract", "Name of specific contract to enroll")
@@ -9,9 +11,7 @@ task("enroll-routers", "Enrolls remote routers for contracts")
         const { network, ethers, deployments } = hre;
         const [signer] = await ethers.getSigners();
 
-        // Get current network's chainId
-        const currentChainId = network.config.chainId;
-        if (!currentChainId) {
+        if (!network.config.chainId) {
             throw new Error("ChainId must be defined in network config");
         }
 
@@ -25,19 +25,21 @@ task("enroll-routers", "Enrolls remote routers for contracts")
             }
         }
 
-        // Filter contracts based on optional parameter
+        // Filter contracts that have relationships from current network
         const contractsToProcess = taskArgs.contract
             ? [[taskArgs.contract, HYPERLANE_CONFIG.deployments[taskArgs.contract]]]
-            : Object.entries(HYPERLANE_CONFIG.deployments);
+            : Object.entries(HYPERLANE_CONFIG.deployments).filter(([contractName]) =>
+                  HYPERLANE_CONFIG.relationships[contractName]?.some(
+                      ([source]) => source === network.name,
+                  ),
+              );
 
-        // Iterate through filtered contracts
         for (const [contractName, contractDeployments] of contractsToProcess) {
             console.log(`Processing ${contractName}...`);
 
             const currentDeployment = contractDeployments[network.name];
             if (!currentDeployment) {
-                console.log(`No deployment found for ${contractName} on ${network.name}`);
-                continue;
+                throw new Error(`No deployment found for ${contractName} on ${network.name}`);
             }
 
             const deployment = await deployments.get(contractName);
@@ -52,44 +54,53 @@ task("enroll-routers", "Enrolls remote routers for contracts")
                 const destNetworkConfig = HYPERLANE_CONFIG.networks[destinationNetwork];
                 const destDeployment = contractDeployments[destinationNetwork];
 
-                if (!destNetworkConfig || !destDeployment) {
-                    console.log(`Missing configuration for ${destinationNetwork}`);
-                    continue;
+                if (destNetworkConfig && destDeployment) {
+                    await enrollRouter(
+                        contract,
+                        destNetworkConfig,
+                        destDeployment,
+                        destinationNetwork,
+                    );
                 }
-
-                if (destNetworkConfig.gasAmount) {
-                    const gasConfig = [
-                        {
-                            domain: destNetworkConfig.chainId,
-                            gas: destNetworkConfig.gasAmount,
-                        },
-                    ];
-
-                    const gasConfigTx = await contract.setDestinationGas(gasConfig);
-                    await gasConfigTx.wait(1);
-                    console.log(`Gas config set for ${destinationNetwork}`);
-                }
-
-                if (destDeployment.hook) {
-                    const hookTx = await contract.setHook(destDeployment.hook);
-                    await hookTx.wait(2);
-                    console.log(`Hook set for ${destinationNetwork}`);
-                }
-
-                if (destDeployment.ism) {
-                    const ismTx = await contract.setInterchainSecurityModule(destDeployment.ism);
-                    await ismTx.wait(2);
-                    console.log(`ISM set for ${destinationNetwork}`);
-                }
-
-                const enroll = await contract.enrollRemoteRouter(
-                    destNetworkConfig.chainId,
-                    ethers.zeroPadValue(destDeployment.address, 32),
-                );
-                await enroll.wait(1);
-                console.log(
-                    `Enrolled ${contractName} from ${network.name} to ${destinationNetwork}`,
-                );
             }
         }
     });
+
+async function enrollRouter(
+    contract: GasRouter,
+    destNetworkConfig: NetworkInfo,
+    destDeployment: ContractDeployment,
+    destinationNetwork: string,
+) {
+    if (destNetworkConfig.gasAmount) {
+        const gasConfig = [
+            {
+                domain: destNetworkConfig.chainId,
+                gas: destNetworkConfig.gasAmount,
+            },
+        ];
+        //@ts-expect-error
+        const gasConfigTx = await contract.setDestinationGas(gasConfig);
+        await gasConfigTx.wait(1);
+        console.log(`Gas config set for ${destinationNetwork}`);
+    }
+
+    if (destDeployment.hook) {
+        const hookTx = await contract.setHook(destDeployment.hook);
+        await hookTx.wait(2);
+        console.log(`Hook set for ${destinationNetwork}`);
+    }
+
+    if (destDeployment.ism) {
+        const ismTx = await contract.setInterchainSecurityModule(destDeployment.ism);
+        await ismTx.wait(2);
+        console.log(`ISM set for ${destinationNetwork}`);
+    }
+
+    const enroll = await contract.enrollRemoteRouter(
+        destNetworkConfig.chainId,
+        ethers.zeroPadValue(destDeployment.address, 32),
+    );
+    await enroll.wait(1);
+    console.log(`Enrolled ${destinationNetwork}`);
+}

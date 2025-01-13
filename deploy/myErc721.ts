@@ -12,11 +12,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    const args = [NFT_CONFIG.name, NFT_CONFIG.symbol, NFT_CONFIG.baseURI];
-
     await deploy(NFT_CONFIG.name, {
         from: deployer,
-        args: args,
+        args: [NFT_CONFIG.name, NFT_CONFIG.symbol, NFT_CONFIG.baseURI],
         log: true,
         waitConfirmations: 1,
     });

@@ -10,7 +10,6 @@ import { HyperlaneConfig, NetworkInfo } from "./types/enrollRouterTypes";
  * relationships: One-way messaging channels between networks
  *   Format: [sourceNetwork, destinationNetwork]
  *   Example: ["topaz", "sepolia"] means contracts on topaz can message sepolia
- *   Note: For two-way messaging, need to define both directions explicitly
  */
 
 function generateNetworkConfig(config: HardhatUserConfig) {

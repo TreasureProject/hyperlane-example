@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MyERC20 is ERC20, ERC20Permit, Ownable {
     constructor(string memory name, string memory symbol) ERC20(name, symbol) ERC20Permit(name) {
-        // Transfer ownership to the deployer of the contract
         transferOwnership(msg.sender);
     }
 

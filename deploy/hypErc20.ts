@@ -1,11 +1,14 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
+import { ethers } from "ethers";
 
 const TOKEN_CONFIG = {
     name: "MyCustomHypERC20",
     symbol: "GLT",
     decimals: 18,
-    totalSupply: "1000000000000000000000000", // 1 million
+    totalSupply: "1000000000000000000000000", // 1 million tokens with 18 decimals
+    hook: ethers.ZeroAddress,
+    interchainSecurityModule: ethers.ZeroAddress,
 } as const;
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -13,43 +16,28 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    const result = await deploy(TOKEN_CONFIG.name, {
+    const deployment = await deploy(TOKEN_CONFIG.name, {
         from: deployer,
         args: [TOKEN_CONFIG.decimals, network.config.lzMailbox],
         log: true,
         waitConfirmations: 2,
     });
 
-    const token = await hre.ethers.getContractAt(TOKEN_CONFIG.name, result.address);
+    const HypERC20 = await hre.ethers.getContractAt(TOKEN_CONFIG.name, deployment.address);
 
-    if (result.newlyDeployed) {
-        console.log("new deploy, init token");
-        await token.initialize(
-            TOKEN_CONFIG.totalSupply,
-            TOKEN_CONFIG.name,
-            TOKEN_CONFIG.symbol,
-            igp,
-            ism,
-            deployer,
-        );
+    await HypERC20.initialize(
+        TOKEN_CONFIG.totalSupply,
+        TOKEN_CONFIG.name,
+        TOKEN_CONFIG.symbol,
+        TOKEN_CONFIG.hook,
+        TOKEN_CONFIG.interchainSecurityModule,
+        deployer,
+    );
 
-        console.log("setting gas configs");
-
-        const gasConfigs = Object.entries(networkConfig.gasConfig.destinationGas).map(
-            ([domain, gas]) => ({
-                domain: parseInt(domain),
-                gas,
-            }),
-        );
-
-        //@ts-expect-error package types defective
-        await token.setDestinationGas(gasConfigs);
-
-        console.log("destination gas set");
-    }
+    console.log(`Deployed and initialized ${TOKEN_CONFIG.name} at:`, deployment.address);
 };
 
-func.tags = ["HypERC20"];
+func.tags = [TOKEN_CONFIG.name];
 func.dependencies = [];
 
 export default func;

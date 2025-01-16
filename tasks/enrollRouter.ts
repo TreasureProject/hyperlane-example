@@ -1,83 +1,52 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { HYPERLANE_CONFIG } from "../config";
 import { task } from "hardhat/config";
+import { hyperlaneConfig } from "../hyperlane.config";
 
-task("enroll-routers", "Enrolls remote routers for contracts")
-    .addOptionalParam("contract", "Name of specific contract to enroll")
-    .setAction(async (taskArgs, hre: HardhatRuntimeEnvironment) => {
-        const { network, ethers, deployments } = hre;
-        const [signer] = await ethers.getSigners();
+task("enroll-routers", "Enrolls remote routers for current network").setAction(async (_, hre) => {
+    const { ethers, config, network } = hre;
+    const [signer] = await ethers.getSigners();
+    const currentNetwork = network.name;
 
-        if (!network.config.chainId) {
-            throw new Error("ChainId must be defined in network config");
-        }
+    const { networks } = hyperlaneConfig[0];
+    if (!networks[currentNetwork]) return;
 
-        const contractsToProcess = taskArgs.contract
-            ? [[taskArgs.contract, HYPERLANE_CONFIG.deployments[taskArgs.contract]]]
-            : Object.entries(HYPERLANE_CONFIG.deployments).filter(
-                  ([_, deployments]) => deployments[network.name] !== undefined,
-              );
+    console.log("Enrollment Starting...");
 
-        for (const [contractName, contractDeployments] of contractsToProcess) {
-            console.log(`Processing ${contractName}...`);
+    const sourceSettings = networks[currentNetwork];
+    const sourceContract = await ethers.getContractAt(
+        sourceSettings.contractName,
+        (await require(`../deployments/${currentNetwork}/${sourceSettings.contractName}.json`))
+            .address,
+        signer,
+    );
 
-            const currentDeployment = contractDeployments[network.name];
-            if (!currentDeployment) {
-                continue;
+    for (const [destNetwork, destSettings] of Object.entries(networks)) {
+        if (destNetwork === currentNetwork) continue;
+
+        try {
+            const destAddress = (
+                await require(`../deployments/${destNetwork}/${destSettings.contractName}.json`)
+            ).address;
+
+            if (config.networks[destNetwork].chainId === undefined) {
+                throw new Error("Chain Id required");
             }
 
-            const deployment = await deployments.get(contractName);
-            const contract = await ethers.getContractAt(contractName, deployment.address, signer);
+            const destDomain = config.networks[destNetwork].chainId.toString();
 
-            const relationships = HYPERLANE_CONFIG.relationships[contractName] || [];
-            const relevantRelationships = relationships.filter(
-                ([source]) => source === network.name,
+            if (sourceSettings.gas) {
+                const gasTx = await sourceContract.setDestinationGas([
+                    { domain: destDomain, gas: sourceSettings.gas },
+                ]);
+                await gasTx.wait(2);
+            }
+            const enrollTx = await sourceContract.enrollRemoteRouter(
+                destDomain,
+                ethers.zeroPadValue(destAddress, 32),
             );
-
-            for (const [_, destinationNetwork] of relevantRelationships) {
-                const destNetworkConfig = HYPERLANE_CONFIG.networks[destinationNetwork];
-                if (!destNetworkConfig) {
-                    throw new Error(`Missing network configuration for ${destinationNetwork}`);
-                }
-
-                try {
-                    if (destNetworkConfig.gasAmount) {
-                        const gasConfig = [
-                            {
-                                domain: destNetworkConfig.chainId,
-                                gas: destNetworkConfig.gasAmount,
-                            },
-                        ];
-                        //@ts-expect-error
-                        const gasConfigTx = await contract.setDestinationGas(gasConfig);
-                        await gasConfigTx.wait(1);
-                        console.log(`Gas config set for ${destinationNetwork}`);
-                    }
-
-                    // Find the corresponding contract for the destination
-                    const destinationContractName = Object.keys(HYPERLANE_CONFIG.deployments).find(
-                        (name) => HYPERLANE_CONFIG.deployments[name][destinationNetwork],
-                    );
-
-                    if (!destinationContractName) {
-                        throw new Error(`No contract found for ${destinationNetwork}`);
-                    }
-
-                    const destinationDeployment =
-                        HYPERLANE_CONFIG.deployments[destinationContractName][destinationNetwork];
-
-                    const enroll = await contract.enrollRemoteRouter(
-                        destNetworkConfig.chainId,
-                        ethers.zeroPadValue(destinationDeployment.address, 32),
-                    );
-                    await enroll.wait(1);
-                    console.log(
-                        `Enrolled ${contractName} from ${network.name} to ${destinationNetwork}`,
-                    );
-                } catch (error) {
-                    console.error(`Failed to enroll router: ${error}`);
-                    throw error;
-                }
-            }
+            await enrollTx.wait(2);
+            console.log(`✓ Enrolled router for ${destNetwork}`);
+        } catch (error) {
+            console.error(`✗ Failed to enroll router for ${destNetwork}:`, error);
         }
-    });
+    }
+});
